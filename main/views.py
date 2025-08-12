@@ -64,3 +64,40 @@ class MovieRetrieveUpdateDeleteAPIView(APIView):
         movie = get_object_or_404(Movie, pk=pk)
         movie.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class SubscriptionAPIView(APIView):
+
+    def get(self, request):
+        subscriptons = Subscription.objects.all()
+        serializer = SubscriptionSerializer(subscriptons, many=True)
+        return Response(serializer.data)
+    def post(self, request):
+        serializer = SubscriptionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            response = {
+                "success": True,
+                "data": serializer.data
+            }
+            return Response(response, status=status.HTTP_201_CREATED)
+        response = {
+            "success": False,
+            "data": serializer.errors
+        }
+        return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+class SubscriptionRetrieveAPIView(APIView):
+    def get(self, request, pk):
+        subcription = get_object_or_404(Subscription, pk=pk)
+        serializer = SubscriptionSerializer(subcription)
+        return Response(serializer.data)
+    def delete(self, request, pk):
+        subcription = get_object_or_404(Subscription, pk=pk)
+        subcription.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    def put(self, request, pk):
+        subcription = get_object_or_404(Subscription, pk=pk)
+        serializer = SubscriptionSerializer(subcription, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
