@@ -18,14 +18,17 @@ class ActorsAPIView(APIView):
     def post(self, request):
         serializer = ActorSerializer(data=request.data)
         if serializer.is_valid():
-            Actor.objects.create(
-                name = serializer.data.get('name'),
-                country = serializer.data['country'],
-                gender = serializer.data['gender'],
-                birthdate = serializer.data['birthdate'],
-            )
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors)
+            serializer.save()
+            response = {
+                "success": True,
+                "data": serializer.data
+            }
+            return Response(response, status=status.HTTP_201_CREATED)
+        response = {
+            "success": False,
+            "data": serializer.errors
+        }
+        return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 class MovieAPIView(APIView):
     def get(self, request):
@@ -64,7 +67,12 @@ class MovieRetrieveUpdateDeleteAPIView(APIView):
         movie = get_object_or_404(Movie, pk=pk)
         movie.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
+    def validate_actors(self, value):
+        if value.actor.count() >= 3:
+            raise serializers.ValidationError(
+                "Kamida 3 actor kiritish kerak"
+            )
+        return value
 class SubscriptionAPIView(APIView):
 
     def get(self, request):
