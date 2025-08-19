@@ -51,3 +51,15 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = '__all__'
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = '__all__'
+
+class ReviewSafeSerializer(serializers.ModelSerializer):
+    user =  serializers.CharField(source='user.username', read_only=True)
+    movie = serializers.CharField(source='movie.name', read_only=True)
+    class Meta:
+        model = Review
+        fields = '__all__'
