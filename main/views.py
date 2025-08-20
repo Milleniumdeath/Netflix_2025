@@ -1,15 +1,34 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
+from .filters import *
 from .serializers import *
 from .models import *
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination, CursorPagination
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
+
+##pagination ni o'zimiz o'zgartirishimiz mumkin bo'lgan klass
+# class CustomPagination(PageNumberPagination):
+#     page_size = 5
+#     page_size_query_param = 'page_size'
+#     max_page_size = 100
+class MyCursorPagination(CursorPagination):
+    page_size = 2
+    ordering = '-id'   # yangidan eskiga qarab tartib
 
 class MovieViewSet(ModelViewSet):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
+    filter_backends = (SearchFilter, OrderingFilter, DjangoFilterBackend)
+    search_fields = ['name',]
+    ordering_fields = ['name', 'year']
+    filterset_fields = ['name',]
+    filterset_class = MovieFilter
 
     def get_serializer_class(self):
         if self.action == 'add_actor':
@@ -50,6 +69,7 @@ class ActorsAPIView(APIView):
     def get(self, request):
         actors = Actor.objects.all()
         serializer = ActorSerializer(actors, many=True)
+
         return Response(serializer.data)
 
     def post(self, request):
@@ -153,6 +173,12 @@ class SubscriptionRetrieveAPIView(APIView):
 class ReviewViewSet(ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    pagination_class = MyCursorPagination
+    filter_backends = (SearchFilter, OrderingFilter, DjangoFilterBackend)
+    search_fields = ['user', 'movie' ]
+    ordering_fields = ['rate', 'created_at']
+    filterset_fields = ['user.username', ]
+    filterset_class = ReviewFilter
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
