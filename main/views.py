@@ -1,3 +1,6 @@
+from django.db.models import Q
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -61,10 +64,44 @@ class MovieViewSet(ModelViewSet):
 
 
 class ExampleAPIview(APIView):
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='search',
+                description='Search by movie of name',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING
+
+            ),
+            openapi.Parameter(
+                name='ordering',
+                description='Ordering by name, year  ',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                enum=['name', 'year', '-name', '-year'],
+            ),
+
+        ]
+    )
     def get(self, request):
-        return Response(
-            "Bu DRF dagi 1-darsda yozildi"
-        )
+        movies = Movie.objects.all()
+        search = request.GET.get('search')
+        if search:
+            movies = movies.filter(Q(name__icontains=search) | Q(genre__icontains=search))
+
+        ordering = request.GET.get('ordering')
+        if ordering:
+            try:
+                movies = movies.order_by(ordering)
+            except Exception as e:
+                return Response(
+                    {
+                        'success': False,
+                        'error': 'Ordering only by title, views, created_at at with (asc, desc)'
+                    }
+                )
+        serializer = MovieSerializer(movies, many=True)
+        return Response(serializer.data)
 class ActorsAPIView(APIView):
     def get(self, request):
         actors = Actor.objects.all()
@@ -87,9 +124,43 @@ class ActorsAPIView(APIView):
         }
         return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
-class MovieAPIView(APIView):
+class MovieSwaggerAPIView(APIView):
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='search',
+                description='Search by movie of name',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING
+
+            ),
+            openapi.Parameter(
+                name='ordering',
+                description='Ordering by name, year  ',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                enum=['name', 'year',  '-name', '-year'],
+            ),
+
+        ]
+    )
     def get(self, request):
         movies = Movie.objects.all()
+        search = request.GET.get('search')
+        if search:
+            movies = movies.filter(Q(name__icontains=search) | Q(genre__icontains=search))
+
+        ordering = request.GET.get('ordering')
+        if ordering :
+            try:
+                movies = movies.order_by(ordering)
+            except Exception as e:
+                return Response(
+                    {
+                        'success': False,
+                        'error': 'Ordering only by title, views, created_at at with (asc, desc)'
+                    }
+                )
         serializer = MovieSerializer(movies, many=True)
         return Response(serializer.data)
 
